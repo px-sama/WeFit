@@ -1,21 +1,42 @@
 import 'bulma/css/bulma.min.css';
 // import your fontawesome library
 import './fontAwesome';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import './Profile.css';
 import React from 'react';
 
-import { getAuth, signOut } from 'firebase/auth'
+import { getAuth, signOut } from 'firebase/auth';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { getUserByUsername } from './services/firebase';
+import UserProfile from './components/profile';
 
-function Profile() {
+export default function Profile() {
     const auth = getAuth();
 
-    return (
+    const {username} = useParams();
+    const [user, setUser] = useState(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        async function checkUserExists() {
+        const [user] = await getUserByUsername(username);
+        if (user?.userId) {
+            setUser(user);
+        } else {
+            navigate('/');
+            }
+        }
+
+        checkUserExists();
+    }, [username, navigate]);
+
+    return user?.username ? (
         <>
             <nav class="navbar is-light" role="navigation" aria-label="main navigation">
                 <div class="navbar-brand">
-                    <a class="navbar-item" href="/">
+                    <a class="navbar-item" href="/dashboard">
                         <FontAwesomeIcon icon="fa-solid fa-dumbbell" /> &nbsp; <strong>WeFit</strong>
                     </a>
                 </div>
@@ -23,6 +44,25 @@ function Profile() {
                 <div class="navbar-menu">
                     <div class="navbar-end">
                         <div class="navbar-item">
+                            <div class="dropdown is-right is-hoverable">
+                                <div class="dropdown-trigger">
+                                <button class="button" aria-haspopup="true" aria-controls="dropdown-menu4">
+                                    <span>
+                                    <FontAwesomeIcon icon="fa-solid fa-bars"/>
+                                    </span>
+                                </button>
+                                </div>
+                                <div class="dropdown-menu" id="dropdown-menu4" role="menu">
+                                <div class="dropdown-content">
+                                    <a class="dropdown-item has-text-dark has-text-weight-bold" href="/dashboard">Dashboard</a>
+                                    <a class="dropdown-item has-text-dark has-text-weight-bold" href={`/p-${user.username}`}>Profile</a>
+                                    <a class="dropdown-item has-text-dark has-text-weight-bold" href={`/psettings-${user.username}`}>Settings</a>
+                                    <a class="dropdown-item has-text-danger has-text-weight-bold" onClick={() => signOut(auth)} href="/login">Sign out</a>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                        {/* <div class="navbar-item">
                         <div class="buttons">
                             <a class="button is-primary" href="/dashboard">
                             <strong>Dashboard</strong>
@@ -31,12 +71,16 @@ function Profile() {
                                 <strong>Sign out</strong>
                             </a>
                         </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </nav>
 
-            <div class="profile_header">
+            <div className="mx-auto max-w-screen-lg">
+                <UserProfile user={user} />
+            </div>
+
+            {/* <div class="profile_header">
             <h1>User Profile Page</h1>
             <p>Just a skeleton page.</p>
             </div>
@@ -69,7 +113,6 @@ function Profile() {
                     <br />
                     <h2>General Analysis</h2>
                     <h5>Score This Week</h5>
-                    {/* <div class="fakeimg" style={{height:'200px'}}>Picture</div> */}
                     <ul id="skill">
                         <li><span class="bar fitscore"></span><h3>Fit Score</h3></li>
                         <li><span class="bar eatscore"></span><h3>Eat Score</h3></li>
@@ -83,10 +126,9 @@ function Profile() {
 
             <div class="profile_footer">
                 <h2>Footer</h2>
-            </div>
+            </div> */}
 
         </>
-    );
+    ) : null;
 }
 
-export default Profile;
